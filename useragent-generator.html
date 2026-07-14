@@ -122,7 +122,7 @@
         </div>
         <div class="hidden sm:flex text-xs font-bold text-slate-400 gap-5 bg-slate-900 border border-white/5 px-4 py-2 rounded-full">
             <span class="flex items-center gap-1.5"><i class="ph-fill ph-check-circle text-emerald-500 text-sm"></i> LATEST VERSIONS</span>
-            <span class="flex items-center gap-1.5"><i class="ph-fill ph-check-circle text-blue-500 text-sm"></i> 100% SECURE</span>
+            <span class="flex items-center gap-1.5"><i class="ph-fill ph-check-circle text-blue-500 text-sm"></i> 100% ORIGINAL</span>
         </div>
     </nav>
 
@@ -308,7 +308,7 @@
             <input type="number" id="uaQty" value="10" min="1" max="10000" class="w-full bg-[#020617] border border-white/10 text-white font-mono rounded-xl px-5 py-4 outline-none focus:border-emerald-500 mb-5 transition-all text-sm">
             
             <button onclick="generateUAs()" class="w-full py-4 bg-emerald-600 text-white font-bold text-[15px] rounded-xl hover:bg-emerald-500 transition-colors shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2">
-                <i class="ph-bold ph-lightning"></i> Generate User-Agent
+                <i class="ph-bold ph-lightning"></i> Generate Stealth UAs
             </button>
         </div>
 
@@ -439,16 +439,16 @@
 
         // --- IPHONE MODELS ---
         const IPHONE_MODELS = [
-            'iPhone', 'iPhone', 'iPhone', 'iPhone', // iPhone 16
-            'iPhone', 'iPhone', 'iPhone', 'iPhone', // iPhone 15
-            'iPhone', 'iPhone', 'iPhone', 'iPhone', // iPhone 14
-            'iPhone', 'iPhone', 'iPhone', 'iPhone'  // iPhone 13
+            'iPhone17,1', 'iPhone17,2', 'iPhone17,3', 'iPhone17,4', // iPhone 16
+            'iPhone16,1', 'iPhone16,2', 'iPhone15,4', 'iPhone15,5', // iPhone 15
+            'iPhone15,2', 'iPhone15,3', 'iPhone14,7', 'iPhone14,8', // iPhone 14
+            'iPhone14,2', 'iPhone14,3', 'iPhone14,4', 'iPhone14,5'  // iPhone 13
         ];
         
         // --- OS & BROWSER VERSIONS (STRICT LATEST) ---
         // STRICTLY 26 FOR SAFARI AND IOS
-        const IOS_VERSIONS = ['18_7'];
-        const MAC_VERSIONS = ['26_5_2', '26_5']; 
+        const IOS_VERSIONS = ['26_5_2', '26_5_1', '26_5'];
+        const MAC_VERSIONS = ['26_5_2', '26_5', '25_0']; 
         const WIN_VERSIONS = ['Windows NT 10.0; Win64; x64', 'Windows NT 11.0; Win64; x64'];
 
         // STRICTLY 150 FOR CHROME. NO 14x OR RANDOMIZATION.
@@ -486,6 +486,14 @@
             const revision = String(randInt(1, 999)).padStart(3, '0');
             const suffix = rand(['', '.A1', '.A2', '.B3']);
             return `${rand(prefixes)}.${year}${month}${day}.${revision}${suffix}`;
+        }
+        
+        // Helper function for completely unique Mobile Build generation for iOS
+        function generateIOSBuild() {
+            const buildMajor = randInt(14, 25);
+            const buildLetter = String.fromCharCode(65 + Math.floor(Math.random() * 26)); // A-Z
+            const buildMinor = randInt(10, 999);
+            return `${buildMajor}${buildLetter}${buildMinor}`;
         }
 
         function generateUAs() {
@@ -570,19 +578,31 @@
                     const osVerDot = osVerRaw.replace(/_/g, '.'); // Dynamic Safari Sync (e.g. 26.5.2)
                     
                     const hw = isIpad ? 'iPad' + randInt(13, 16) + ',' + randInt(1, 8) : rand(IPHONE_MODELS);
-                    const base = isIpad ? `${hw}; CPU OS ${osVerUnder} like Mac OS X` : `${hw}; CPU iPhone OS ${osVerUnder} like Mac OS X`;
-                    const safBuild = rand(['15E148', '21E219', '21H20', '23D8133']);
+                    
+                    // Unique Mobile/Build generated dynamically
+                    const safBuild = generateIOSBuild();
+                    
+                    const devName = isIpad ? 'iPad' : 'iPhone';
+                    const baseStandard = isIpad ? `${devName}; CPU OS ${osVerUnder} like Mac OS X` : `${devName}; CPU iPhone OS ${osVerUnder} like Mac OS X`;
 
                     if (browser === 'Safari') {
-                        ua = `Mozilla/5.0 (${base}) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/${osVerDot} Mobile/${safBuild} Safari/604.1`;
+                        if (!isIpad) {
+                            ua = `Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.5.2 Mobile/${safBuild} Safari/604.1`;
+                        } else {
+                            ua = `Mozilla/5.0 (iPad; CPU OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.5.2 Mobile/${safBuild} Safari/604.1`;
+                        }
                     } else if (browser === 'Chrome') {
-                        ua = `Mozilla/5.0 (${base}) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/${chromeCore} Mobile/${safBuild} Safari/604.1`;
+                        if (!isIpad) {
+                            ua = `Mozilla/5.0 (iPhone; CPU iPhone OS 26_5_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/150.0.7871.51 Mobile/${safBuild} Safari/604.1`;
+                        } else {
+                            ua = `Mozilla/5.0 (iPad; CPU OS 26_5_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/150.0.7871.51 Mobile/${safBuild} Safari/604.1`;
+                        }
                     } else if (browser === 'Edge') {
-                        ua = `Mozilla/5.0 (${base}) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/${osVerDot} Mobile/${safBuild} Safari/604.1 EdgiOS/${edgeCore}`;
+                        ua = `Mozilla/5.0 (${baseStandard}) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/${osVerDot} Mobile/${safBuild} Safari/604.1 EdgiOS/${edgeCore}`;
                     } else if (browser === 'Firefox') {
-                        ua = `Mozilla/5.0 (${base}) AppleWebKit/605.1.15 (KHTML, like Gecko) FxiOS/${firefoxCore} Mobile/${safBuild} Safari/605.1.15`;
+                        ua = `Mozilla/5.0 (${baseStandard}) AppleWebKit/605.1.15 (KHTML, like Gecko) FxiOS/${firefoxCore} Mobile/${safBuild} Safari/605.1.15`;
                     } else if (browser === 'Opera') {
-                        ua = `Mozilla/5.0 (${base}) AppleWebKit/605.1.15 (KHTML, like Gecko) OPiOS/${operaCore} Mobile/${safBuild} Safari/605.1.15`;
+                        ua = `Mozilla/5.0 (${baseStandard}) AppleWebKit/605.1.15 (KHTML, like Gecko) OPiOS/${operaCore} Mobile/${safBuild} Safari/605.1.15`;
                     }
 
                 } else if (currentDevice === 'Windows 10' || currentDevice === 'Windows 11') {
@@ -679,7 +699,9 @@
                          const osVerDot = osVerRaw.replace(/_/g, '.');
                          const hw = isIpad ? 'iPad' + randInt(13, 16) + ',' + randInt(1, 8) : rand(IPHONE_MODELS);
                          
-                         ua = `Mozilla/5.0 (${hw}; CPU ${isIpad?'OS':'iPhone OS'} ${osVerUnder} like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/${rand(['15E148', '21E219', '21H20', '23D8133'])}`;
+                         const safBuild = generateIOSBuild();
+                         
+                         ua = `Mozilla/5.0 (${hw}; CPU ${isIpad?'OS':'iPhone OS'} ${osVerUnder} like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/${safBuild}`;
                          
                          if (inapp === 'Facebook') {
                             appString = ` Safari/604.1 [FBAN/FBIOS;FBAV/${rand(APP_VERSIONS['Facebook'])};FBBV/${randInt(800000000, 999999999)};FBDV/${hw};FBMD/${currentDevice==='iPad'?'iPad':'iPhone'};FBSN/iOS;FBSV/${osVerDot};FBSS/3;FBID/phone;FBLC/${geoUnder};FBOP/5;FBRV/${randInt(80000000, 99999999)};IABMV/1]`;
@@ -689,10 +711,10 @@
                             ua = `Mozilla/5.0 (${hw}; CPU ${isIpad?'OS':'iPhone OS'} ${osVerUnder} like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) TikTok/${rand(APP_VERSIONS['TikTok'])} (iOS ${osVerDot}; ${geoUnder})`;
                             appString = "";
                          } else if (inapp === 'Twitter') {
-                            ua = `Mozilla/5.0 (${hw}; CPU ${isIpad?'OS':'iPhone OS'} ${osVerUnder} like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/${rand(['15E148', '21E219'])} TwitteriPhone/${rand(APP_VERSIONS['Twitter'])} Locale/${geoUnder}`;
+                            ua = `Mozilla/5.0 (${hw}; CPU ${isIpad?'OS':'iPhone OS'} ${osVerUnder} like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/${safBuild} TwitteriPhone/${rand(APP_VERSIONS['Twitter'])} Locale/${geoUnder}`;
                             appString = "";
                          } else if (inapp === 'LinkedIn') {
-                            ua = `Mozilla/5.0 (${hw}; CPU ${isIpad?'OS':'iPhone OS'} ${osVerUnder} like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/${rand(['15E148', '21E219'])} LinkedInApp/${rand(APP_VERSIONS['LinkedIn'])} (${geoUnder})`;
+                            ua = `Mozilla/5.0 (${hw}; CPU ${isIpad?'OS':'iPhone OS'} ${osVerUnder} like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/${safBuild} LinkedInApp/${rand(APP_VERSIONS['LinkedIn'])} (${geoUnder})`;
                             appString = "";
                          } else if (inapp === 'Snapchat') {
                             ua = `Snapchat/${rand(APP_VERSIONS['Snapchat'])} (iOS ${osVerDot}; ${hw})`;
