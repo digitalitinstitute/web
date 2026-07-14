@@ -122,7 +122,7 @@
         </div>
         <div class="hidden sm:flex text-xs font-bold text-slate-400 gap-5 bg-slate-900 border border-white/5 px-4 py-2 rounded-full">
             <span class="flex items-center gap-1.5"><i class="ph-fill ph-check-circle text-emerald-500 text-sm"></i> LATEST VERSIONS</span>
-            <span class="flex items-center gap-1.5"><i class="ph-fill ph-check-circle text-blue-500 text-sm"></i> 100% ORIGINAL</span>
+            <span class="flex items-center gap-1.5"><i class="ph-fill ph-check-circle text-blue-500 text-sm"></i> 100% SECURE</span>
         </div>
     </nav>
 
@@ -446,21 +446,6 @@
         ];
         
         // --- OS & BROWSER VERSIONS (STRICT LATEST) ---
-        // STRICTLY 26 FOR SAFARI AND IOS
-        const IOS_VERSIONS = ['26_5_2', '26_5_1', '26_5'];
-        const MAC_VERSIONS = ['26_5_2', '26_5', '25_0']; 
-        const WIN_VERSIONS = ['Windows NT 10.0; Win64; x64', 'Windows NT 11.0; Win64; x64'];
-
-        // STRICTLY 150 FOR CHROME. NO 14x OR RANDOMIZATION.
-        const BROWSERS = {
-            'ChromeMobile': ['150.0.7871.61', '150.0.7871.47'], 
-            'ChromePC': ['150.0.0.0', '150.0.7871.47'], 
-            'Edge': ['150.0.4078.50', '150.0.4078.48'], 
-            'Opera': ['133.0.5932.25', '133.0.5932.20'],
-            'Firefox': ['152.0.5', '152.0.4'],
-            'Safari': ['26.5.2', '26.5.1'] // STRICT 26
-        };
-
         const APP_VERSIONS = {
             'Facebook': ['567.1.0.52.74', '568.0.0.35.80', '569.0.0.40.100'],
             'Instagram': ['435.0.0.0.37', '436.0.0.40.90', '437.0.0.50.105'],
@@ -488,7 +473,6 @@
             return `${rand(prefixes)}.${year}${month}${day}.${revision}${suffix}`;
         }
         
-        // Helper function for completely unique Mobile Build generation for iOS
         function generateIOSBuild() {
             const buildMajor = randInt(14, 25);
             const buildLetter = String.fromCharCode(65 + Math.floor(Math.random() * 26)); // A-Z
@@ -527,15 +511,22 @@
                     currentDevice = rand(mixDeviceTypes);
                 }
 
-                // STRICTLY GET 150.x CHROME, 150.x EDGE, 152.x FIREFOX, 133.x OPERA, 26.x SAFARI
-                const chromeMobile = rand(BROWSERS['ChromeMobile']);
-                const chromePC = rand(BROWSERS['ChromePC']);
-                const chromeCore = (currentDevice === 'Android' || currentDevice === 'iPhone' || currentDevice === 'iPad') ? chromeMobile : chromePC;
-                const edgeCore = rand(BROWSERS['Edge']);
-                const firefoxCore = rand(BROWSERS['Firefox']);
-                const firefoxMajor = firefoxCore.split('.')[0];
-                const operaCore = rand(BROWSERS['Opera']);
-                const safariCore = rand(BROWSERS['Safari']);
+                // ==========================================
+                // DYNAMIC DESKTOP BROWSERS TO FIX DUPLICATE LIMIT
+                // ==========================================
+                const chromeMobile = '150.0.7871.51'; 
+                const pcChrome = `150.0.${randInt(7000, 7999)}.${randInt(10, 199)}`;
+                const pcEdge = `150.0.4078.${randInt(10, 99)}`;
+                const pcFirefox = `152.0.${randInt(1, 99)}`;
+                const pcOpera = `133.0.5932.${randInt(10, 99)}`;
+                const pcSafari = `26.5.${randInt(1, 99)}`;
+
+                const chromeCore = (currentDevice === 'Android' || currentDevice === 'iPhone' || currentDevice === 'iPad') ? chromeMobile : pcChrome;
+                const edgeCore = (currentDevice === 'Android' || currentDevice === 'iPhone' || currentDevice === 'iPad') ? '150.0.4078.50' : pcEdge;
+                const firefoxCore = (currentDevice === 'Android' || currentDevice === 'iPhone' || currentDevice === 'iPad') ? '152.0.5' : pcFirefox;
+                const firefoxMajor = '152';
+                const operaCore = (currentDevice === 'Android' || currentDevice === 'iPhone' || currentDevice === 'iPad') ? '133.0.5932.25' : pcOpera;
+                const safariCore = (currentDevice === 'Android' || currentDevice === 'iPhone' || currentDevice === 'iPad') ? '26.5.2' : pcSafari;
 
                 // ==========================================
                 // BASE OS STRING CONSTRUCTION
@@ -549,13 +540,12 @@
                     }
                     
                     let availableModels = ANDROID_MODELS.filter(m => m.brand === currentBrand);
-                    // Fallback to Samsung if brand not found (safety)
                     if (availableModels.length === 0) availableModels = ANDROID_MODELS.filter(m => m.brand === 'Samsung');
                     
                     let chosenModelObj = rand(availableModels);
                     
                     let modelName = chosenModelObj.model;
-                    let androidOsVer = rand(chosenModelObj.os); // Strictly matches 14, 15, 16 
+                    let androidOsVer = rand(chosenModelObj.os); 
                     let build = generateAndroidBuild();
                     
                     if (browser === 'Chrome') {
@@ -567,21 +557,17 @@
                     } else if (browser === 'Opera') {
                         ua = `Mozilla/5.0 (Linux; Android ${androidOsVer}; ${modelName} Build/${build}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${chromeCore} Mobile Safari/537.36 OPR/${operaCore}`;
                     } else if (browser === 'Safari') {
-                        // Fallback to Chrome format for Android Webkit requests
                         ua = `Mozilla/5.0 (Linux; Android ${androidOsVer}; ${modelName} Build/${build}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${chromeCore} Mobile Safari/537.36`;
                     }
 
                 } else if (currentDevice === 'iPhone' || currentDevice === 'iPad') {
                     const isIpad = currentDevice === 'iPad';
-                    const osVerRaw = rand(IOS_VERSIONS); // strictly 26_x_x
+                    const osVerRaw = rand(['26_5_2', '26_5_1', '26_5']); 
                     const osVerUnder = osVerRaw; 
-                    const osVerDot = osVerRaw.replace(/_/g, '.'); // Dynamic Safari Sync (e.g. 26.5.2)
+                    const osVerDot = osVerRaw.replace(/_/g, '.'); 
                     
                     const hw = isIpad ? 'iPad' + randInt(13, 16) + ',' + randInt(1, 8) : rand(IPHONE_MODELS);
-                    
-                    // Unique Mobile/Build generated dynamically
                     const safBuild = generateIOSBuild();
-                    
                     const devName = isIpad ? 'iPad' : 'iPhone';
                     const baseStandard = isIpad ? `${devName}; CPU OS ${osVerUnder} like Mac OS X` : `${devName}; CPU iPhone OS ${osVerUnder} like Mac OS X`;
 
@@ -619,7 +605,7 @@
                     }
 
                 } else if (currentDevice === 'Mac') {
-                    const macVer = rand(MAC_VERSIONS);
+                    const macVer = `26_5_${randInt(1, 99)}`; // Dynamic build update
                     const base = `Macintosh; Intel Mac OS X ${macVer}`;
 
                     if (browser === 'Safari') {
@@ -641,7 +627,6 @@
                     let appString = "";
 
                     if (currentDevice === 'Android') {
-                        // Re-resolve strictly if random mix
                         let selBrand = document.querySelector('input[name="brand"]:checked').value;
                         let currentBrand = selBrand;
                         if (selBrand === 'Random' || deviceSelection === 'Random Mix') {
@@ -694,7 +679,7 @@
 
                     } else if (currentDevice === 'iPhone' || currentDevice === 'iPad') {
                          const isIpad = currentDevice === 'iPad';
-                         const osVerRaw = rand(IOS_VERSIONS);
+                         const osVerRaw = rand(['26_5_2', '26_5_1', '26_5']);
                          const osVerUnder = osVerRaw;
                          const osVerDot = osVerRaw.replace(/_/g, '.');
                          const hw = isIpad ? 'iPad' + randInt(13, 16) + ',' + randInt(1, 8) : rand(IPHONE_MODELS);
